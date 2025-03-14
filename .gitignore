@@ -1,0 +1,18 @@
+# Node.js dependencies
+node_modules/
+dist/
+package-lock.json
+
+# Angular build outputs
+*.log
+*.tmp
+*.cache
+.angular/
+.vscode/
+.idea/
+
+# Environment files (caso tenha criado)
+src/environments/environment*.ts
+
+# SQL dumps (se forem sensíveis)
+*.sql

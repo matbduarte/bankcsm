@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# Rules for CustomerAgreement
+RewriteRule ^CustomerAgreement/GetList/?$ CustomerAgreement/GetList.php [NC,L]
+
+# Rules for PartyDirectory
+RewriteRule ^PartyDirectory/GetList/?$ PartyDirectory/GetList.php [NC,L]
+
+# If we pass some data in the request we must use like this:
+# RewriteRule ^employees/([0-9]+)/?$ employees.php?id=$1 [NC,L]
+
+# Preserve Authorization header
+SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0

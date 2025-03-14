@@ -1,0 +1,44 @@
+Can you create a dummy data in my tables so I can test them, please?
+There are some rules:
+Starting with the table external_identification, the column 'type_of_identification_code' will always be "CRID", the identification I want that to be something continuous (CUST001, CUST002, CUST003, ...) and the person column I want to be a string with alpha characters, uppercase, with 16 of length, like that "0FFM30BGW2ICFQR8".
+I want to have 50 different identifications with different numbers of persons (some of them must have only one person).
+
+In the table postal_address, each person must have at least one registry.
+All registries will have these columns values by default: is_party_a_person=true; organisation=NULL; status="ENAB"; is_active=true;
+The column address_type can be "HOME" or "BIZZ";
+The column contact_preference can be "PREF" or "NOTP" (we must have only one "PREF" for each person);
+
+In the table phone_address, each person must have at least one registry.
+All registries will have these columns values by default: extension=NULL; is_party_a_person=true; organisation=NULL;
+The column number must follow the pattern: +<COUNTRY_TWO_DIGITS><9_DIGITS_PHONE_NUMBER>;
+The column contact_preference can be "PREF" or "NOTP" (we must have only one "PREF" for each person);
+The column sms_preference can be "PREF" or "NOTP" (we must have only one "PREF" for each person);
+The column type can be "PHON", "WORK" or "MOBL";
+
+In the table electronic_address, each person must have at least one registry.
+The column contact_preference can be "PREF" or "NOTP" (we must have only one "PREF" for each person);
+
+In the table person, each person must have only one registry (the person column of external_identification table is the identification column of person table).
+All registries will have these columns values by default: brand="TEST"; financial_institution="MAT_BANK"; language="en"; status="ENAB"; vnid=NULL.
+
+In the table agreement_involvement, each person can have multiple registries or none (the person column of external_identification table is the person column of agreement_involvement table).
+All registries will have these columns values by default: party_role="AccountHolder"; is_active=true;
+The column agreement  I want to be a string with alpha characters, uppercase, with 16 of length, like that "0FFM10B8AQH9ZJNN".
+The rule for this table is that a person can have multiple agreements and an agreement can have multiple persons (we want to test all these cases - please identify for me what you done to make my tests easier)
+
+In the table agreement, each agreement created in the previous table must have only one registry (the agreement column of agreement_involvement table is the identification column of agreement table).
+All registries will have these columns values by default: brand="TEST"; financial_institution="MAT_BANK"; status="Enabled"; blocked_reason_code=NULL; credit_limit_amount=100000; credit_limit_currency=""; cash_limit_amount=50000; cash_limit_currency=""; closed_status_reason_code=NULL; status_changed_date_time=NULL; bill_overlimit_fee_next_cycle=false; vnid=NULL; date_to_disable=NULL; balance_cleared_date_time=NULL;
+The column product can be "VISA" or "MASTER";
+The column is_closed can be true or false (we want agreements with different values for testing);
+The column closing_date must be filled in only if the column is_closed is true;
+The column closure_request_date must be filled in only if the column is_closed is true and it must have a previous date from the closing_date;
+The column is_network_account_updater_opted_out can be true or false (we want agreements with different values for testing);
+
+In the table external_account, each agreement must have at least one registry.
+The column clearing_system_identification_code can be "ACCMAT" or "ACCTALI";
+The columns account_identification_code and clearing_system_member_identification I want to be a string with alpha characters and symbols, with uppercase and lowcase, with 21 of length, like that "z05p)=JP$-RsUHJ^,t456". 
+
+Person is the identification for a real person.
+Agreement is the identification for the bank account(s) of that person.
+
+Please, do not use the values "0FFM30BGW2ICFQR8", "0FFM10B8AQH9ZJNN" and "z05p)=JP$-RsUHJ^,t456".
