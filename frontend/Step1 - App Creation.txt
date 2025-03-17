@@ -107,30 +107,29 @@ Adicione o seguinte código nesse novo arquivo (já estamos adicionando nosso Ht
 /***** app.module.ts start *****/
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from '@angular/common/http';
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import { AuthInterceptor } from './interceptors/auth.service';
+import { AppComponent } from './app.component';
 
 @NgModule({
-  declarations: [],
-  imports: [
-    BrowserModule,     // Static import for Angular modules
-    HttpClientModule   // Static import for HttpClientModule
-  ],
-  providers: [
-    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
-  ],
-  bootstrap: []
+  imports: [BrowserModule, AppComponent],
+  bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {}
 /***** app.module.ts end *****/
 
 Agora substitua o conteúdo do arquivo main.ts para o seguinte:
 /***** main.ts start *****/
-import { bootstrapApplication } from '@angular/platform-browser';
-import { AppComponent } from './app/app.component'; // Import AppComponent directly
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { enableProdMode } from '@angular/core';
+import { AppModule } from './app/app.module';
+import { environment } from './environments/environment';
 
-bootstrapApplication(AppComponent).catch(err => console.error(err));
+if (environment.production) {
+  enableProdMode();
+}
+
+platformBrowserDynamic()
+  .bootstrapModule(AppModule)
+  .catch(err => console.error(err));
 /***** main.ts end *****/
 
 Exclua o app.config.ts pois não precisamos mais dele já que mudamos nossa app para funcionar com módulos.
@@ -138,19 +137,19 @@ Exclua o app.config.ts pois não precisamos mais dele já que mudamos nossa app 
 Abra o arquivo app.component.ts e deixe com o seguinte código:
 /***** app.component.ts start *****/
 import { Component } from '@angular/core';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
+  imports: [RouterModule],
   standalone: true
 })
 export class AppComponent {
   title = 'bankcsm-ui';
 }
 /***** app.component.ts end *****/
-
-Abra o arquivo app.component.html e remova a última linha: <router-outlet />
 
 Execute os seguintes comandos em ordem:
 $ Remove-Item -Recurse -Force node_modules
@@ -161,25 +160,3 @@ $ ng serve
 (isso fará com que os erros do código sumam e que sua app seja iniciada)
 
 Se ainda existirem erros no código mas que não bloqueiem a execução, tente reiniciar o VSCode para ver se somem.
-
-
-
-
-
-
-
-
-Perfeito! Agora tenho um projeto em Angular com tudo configurado e meu backend preparado também.
-Pra finalizar por hoje, só gostaria de subir tudo isso para meu repositório git.
-O que devo fazer?
-
-Minha estrutura de pastas é a seguinte:
-- BankCSM
--- backend
---- api
----- all files to create the apis
---- sql scripts
----- all files to create the tables for backend
--- frontend
---- bankcsm-ui
----- all files we generated using ng commands in VSCode just now
