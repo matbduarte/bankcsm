@@ -1,0 +1,46 @@
+1- Para realizarmos o deploy, precisamos já ter configurado o FreeHostia (nosso servidor das APIs).
+
+2- Precisamos ajustar os arquivos angular.json e index.html para ficarem de acordo entre si:
+/***** angular.json *****/
+(...)
+"outputPath": "dist/bankcsm-ui",
+(...)
+/***** angular.json *****/
+
+/***** index.html *****/
+(...)
+<base href="/bankcsm-ui/browser/">
+(...)
+/***** index.html *****/
+
+3- Executar o comando de build da nossa aplicação:
+$ ng build --configuration production
+(isso irá gerar a versão otimizada da sua aplicação na pasta dist/bankcsm-ui/ e o arquivo index.html deve ser encontrado dentro da pasta browser)
+
+4- No FreeHostia, na parte de File Manager, clique em UPLOAD NEW FOLDER e selecione a pasta dist/bankcsm-ui/ para ser feito o upload em www/apidevmatbankcsm.soon.it/
+(devemos ter o caminho: www/apidevmatbankcsm.soon.it/bankcsm-ui/browser/index.html)
+
+5- Agora crie um arquivo no mesmo nível dessa pasta que fizemos o upload (www/apidevmatbankcsm.soon.it/) com o nome .htaccess e o seguinte conteúdo:
+/***** .htaccess start *****/
+RewriteEngine On
+RewriteBase /bankcsm-ui/
+
+# Define os tipos MIME corretos para arquivos JavaScript, CSS e JSON
+AddType application/javascript .js
+AddType text/css .css
+AddType application/json .json
+
+# Define index.html como o arquivo principal
+DirectoryIndex browser/index.html
+
+# Garante que os arquivos sejam servidos corretamente
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^(.*)$ $1 [L]
+
+# Redireciona todas as solicitações desconhecidas para index.html (para o Angular funcionar)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /bankcsm-ui/browser/index.html [L]
+/***** .htaccess end *****/
+
+6- Teste acessar o site, utilizando uma janela anônima, pelo link: http://apidevmatbankcsm.soon.it/bankcsm-ui/
