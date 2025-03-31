@@ -1,0 +1,246 @@
+1- Antes de criarmos a parte de login com Google, vamos criar nossa primeira página pós login: customer-search. Para isso, execute o seguinte comando:
+$ ng generate component pages/customer-search
+(será criada a pasta src/app/pages/customer-search com os arquivos HTML, SCSS, SPEC.TS e TS)
+
+2- Abra o arquivo app.routes.ts e adicione uma nova rota para nosso novo componente:
+/***** app.routes.ts start *****/
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { LoginComponent } from './pages/login/login.component';
+import { CustomerSearchComponent } from './pages/customer-search/customer-search.component';
+
+export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'customer-search', component: CustomerSearchComponent },
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRouting {}
+/***** app.routes.ts end *****/
+
+3- Ajuste o código do arquivo customer-search.component.html:
+/***** customer-search.component.html start *****/
+<h2>Customer Search</h2>
+<p>Search for customers by name or ID:</p>
+<input type="text" placeholder="Enter customer name or ID">
+<button>Search</button>
+/***** customer-search.component.html end *****/
+
+4- Vamos realizar a autenticação utilizando o google agora.
+4.1- Acesse Google Cloud Console: https://console.cloud.google.com/
+4.2- Crie um novo projeto (ou use um existente)
+4.3- No menu lateral, vá para "APIs e serviços" > "Credenciais"
+4.4- Clique em "Criar credenciais" > "ID do Cliente OAuth"
+4.5- Talvez seja necessário realizar uma rápida configuração antes de seguir
+4.6- Escolha "Aplicativo da Web" e preencha os campos:
+Nome: bankcsm-ui
+Origens JavaScript autorizadas: http://localhost e http://localhost:4200 para desenvolvimento, e adicione a(s) URL(s) do seu ambiente de produção (se já souber)
+URIs de redirecionamento autorizados: http://localhost
+Clique em "Criar" e salve o Client ID e Secret.
+4.7- Instalar a Biblioteca do Google Sign-In:
+$ npm install @abacritt/angularx-social-login
+4.8- Configurar o SocialAuthService no nível da aplicação (substitua 'SEU_CLIENT_ID_AQUI' pelo gerado no passo 6):
+/***** main.ts start *****/
+import { enableProdMode, importProvidersFrom } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+import { AppRouting } from './app/app.routes';
+import { BrowserModule } from '@angular/platform-browser';
+import { environment } from './environments/environment';
+import { provideHttpClient } from '@angular/common/http';
+import { GoogleLoginProvider, SocialAuthServiceConfig, SocialLoginModule } from '@abacritt/angularx-social-login';
+
+if (environment.production) {
+  enableProdMode();
+}
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    importProvidersFrom(BrowserModule, AppRouting, SocialLoginModule),
+    provideHttpClient(),
+    {
+      provide: 'SocialAuthServiceConfig',
+      useValue: {
+        autoLogin: false,
+        providers: [
+          {
+            id: GoogleLoginProvider.PROVIDER_ID,
+            provider: new GoogleLoginProvider('SEU_CLIENT_ID_AQUI'),
+          },
+        ],
+        onError: (err) => console.error(err),
+      } as SocialAuthServiceConfig,
+    }
+  ],
+}).catch(err => console.error(err));
+/***** main.ts end *****/
+4.9- Ajustamos o componente login para conseguirmos fazer a autenticação (TS):
+/***** login.component.ts start *****/
+import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SocialAuthService, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-login',
+  standalone:true,
+  imports:[
+    CommonModule,
+    GoogleSigninButtonModule
+  ],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
+})
+export class LoginComponent implements OnInit{
+  private router = inject(Router);
+
+  constructor( private authService:SocialAuthService) {}
+
+  ngOnInit(): void {
+    this.authService.authState.subscribe((user) => {
+      console.log(user)
+      this.router.navigate(['/customer-search']);
+    });
+  }
+}
+/***** login.component.ts end *****/
+4.10- Ajustamos o componente login para conseguirmos fazer a autenticação (HTML):
+/***** login.component.html start *****/
+<script src="https://accounts.google.com/gsi/client" async></script>
+<asl-google-signin-button type='standard' size='medium'>
+</asl-google-signin-button>
+/***** login.component.html end *****/
+
+5- Nesse ponto o Login pelo Google deve estar funcionando com sucesso e o redirecionamento sendo realizado.
+
+6- O que gostaríamos de fazer a partir daqui é que as páginas pós login não possam ser acessadas sem login.
+
+7- Na pasta app/services crie o arquivo auth.service.ts:
+/***** auth.service.ts start *****/
+import { Injectable } from '@angular/core';
+import { SocialAuthService, SocialUser } from '@abacritt/angularx-social-login';
+import { BehaviorSubject, Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class AuthService {
+  private userSubject = new BehaviorSubject<SocialUser | null>(null);
+  user$: Observable<SocialUser | null> = this.userSubject.asObservable();
+
+  constructor(private authService: SocialAuthService) {
+    // Verifica se há um usuário salvo ao iniciar a aplicação
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      this.userSubject.next(JSON.parse(storedUser));
+    }
+
+    // Atualiza o estado quando o usuário faz login/logout
+    this.authService.authState.subscribe((user) => {
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user)); // Salva no localStorage
+        this.userSubject.next(user);
+      } else {
+        localStorage.removeItem('user'); // Remove ao deslogar
+        this.userSubject.next(null);
+      }
+    });
+  }
+
+  isAuthenticated(): boolean {
+    return this.userSubject.value !== null;
+  }
+
+  getUser(): SocialUser | null {
+    return this.userSubject.value;
+  }
+
+  logout(): void {
+    this.authService.signOut();
+    localStorage.removeItem('user');
+    this.userSubject.next(null);
+  }
+}
+/***** auth.service.ts end *****/
+
+8- Crie a pasta app/guards/ e crie o arquivo auth.guard.ts dentro dela:
+/***** auth.guard.ts start *****/
+import { Injectable, inject } from '@angular/core';
+import { CanActivate, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class AuthGuard implements CanActivate {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  canActivate(): boolean {
+    if (this.authService.isAuthenticated()) {
+      return true;
+    } else {
+      this.router.navigate(['/login']);
+      return false;
+    }
+  }
+}
+/***** auth.guard.ts end *****/
+
+9- Ajustamos o arquivo app.routes.ts para utilizar esse guard que acabamos de criar:
+/***** app.routes.ts start *****/
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { LoginComponent } from './pages/login/login.component';
+import { CustomerSearchComponent } from './pages/customer-search/customer-search.component';
+import { AuthGuard } from './guards/auth.guard';
+
+export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: 'customer-search', component: CustomerSearchComponent, canActivate: [AuthGuard] },
+  { path: '**', redirectTo: 'login' }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRouting {}
+/***** app.routes.ts end *****/
+
+10- Por fim, ajustamos nosso arquivo login.component.ts para fazer a correta gestão do login:
+/***** login.component.ts start *****/
+import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SocialAuthService, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule, GoogleSigninButtonModule],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
+})
+export class LoginComponent implements OnInit {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  constructor(private socialAuthService: SocialAuthService) {}
+
+  ngOnInit(): void {
+    this.socialAuthService.authState.subscribe((user) => {
+      if (user) {
+        this.authService.isAuthenticated(); // Salva o estado
+        this.router.navigate(['/customer-search']);
+      }
+    });
+  }
+}
+
+/***** login.component.ts end *****/
