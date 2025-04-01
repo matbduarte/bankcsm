@@ -44,3 +44,35 @@ RewriteRule . /bankcsm-ui/browser/index.html [L]
 /***** .htaccess end *****/
 
 6- Teste acessar o site, utilizando uma janela anônima, pelo link: http://apidevmatbankcsm.soon.it/bankcsm-ui/
+
+7- O problema disso é que se executarmos ng serve, o browser irá relatar problema de mime type pois o Angular já espera que a base seja apenas /, então ao tentar carregar os arquivos, ele não encontra os caminhos corretos.
+7.1- Para ajustar isso, iremos criar um script: set-base-href.js (nesse caminho: bankcsm-ui/set-base-href.js - junto com os arquivos angular.json e package.json, por ex)
+/***** set-base-href.js start *****/
+const fs = require('fs');
+const filePath = 'dist/bankcsm-ui/browser/index.html';
+const isProduction = process.argv.includes('--prod');
+
+fs.readFile(filePath, 'utf8', (err, data) => {
+  if (err) throw err;
+  const newBase = isProduction ? '<base href="/bankcsm-ui/browser/">' : '<base href="/">';
+  const result = data.replace(/<base href=".*?">/, newBase);
+
+  fs.writeFile(filePath, result, 'utf8', (err) => {
+    if (err) throw err;
+    console.log(`Base href set to ${newBase}`);
+  });
+});
+
+/***** set-base-href.js end *****/
+7.2- Deixe o arquivo index.html com a seguinte linha configurada: <base href="/">
+7.3- Altere o arquivo bankcsm-ui/package.json para que a parte de scripts contemple os seguintes comandos:
+/***** package.json start *****/
+  "scripts": {
+    "build": "ng build && node set-base-href.js",
+    "build:prod": "ng build --configuration=production && node set-base-href.js --prod",
+    "serve": "ng serve",
+  },
+/***** package.json end *****/
+7.4- Agora, ao invés de executarmos nosso app utilizando o comando 'ng serve', utilizaremos 'npm run serve'.
+7.5- E para gerar o pacote de deploy, vamos executar o comando 'npm run build:prod'
+7.6- Faça o deploy do novo pacote e faça os testes em ambos os ambientes para garantir que está tudo funcionando certinho.
