@@ -1,0 +1,9 @@
+1- Para ser possível adicionar imagens ao app, criamos a pasta src/assets/images/ e adicionamos as imagens nela.
+1.1- No arquivo HTML, fazemos a referência assim: <img src="/assets/images/login-background.jpg" alt="Imagem de fundo" />
+1.2- Para que a app reconhecesse o arquivo ao ser executada, foi necessário alterar o arquivo angular.json e deixar a parte "assets" da seguinte forma:
+  "assets": [
+    "src/favicon.ico",
+    "src/assets"
+  ],
+
+2. 
